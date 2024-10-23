@@ -1,0 +1,25 @@
+name: test
+
+on:
+  pull_request:
+
+env:
+  IMAGENAME: ghcr.io/richiesams/speedtest-exporter
+  REGISTRY: ghcr.io
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Get golang
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.23.x
+      - name: Build image
+        uses: goreleaser/goreleaser-action@v4
+        with:
+          distribution: goreleaser
+          version: v2.3.2
+          args: release --snapshot --clean
