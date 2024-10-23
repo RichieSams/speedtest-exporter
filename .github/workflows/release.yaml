@@ -17,19 +17,21 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Fetch all tags
-        run: git fetch --force --tags
-      - name: Bump version and push tag
-        id: tag_version
-        uses: mathieudutour/github-tag-action@v6.1
+      - name: Setup SVU
+        id: svu
+        uses: obfu5c8/action-svu@v1.0.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Re-fetch all tags
-        run: git fetch --force --tags
+          svu-version: 1.12.0
+      - name: Create git tag
+        run: git tag ${{ steps.svu.outputs.version }}
+      - name: Generate changelog
+        id: git-cliff
+        uses: orhun/git-cliff-action@v3.0.2
+        with:
+          args: --latest --strip all
       - name: Login to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
         with:
@@ -45,6 +47,6 @@ jobs:
         with:
           distribution: goreleaser
           version: v2.3.2
-          args: release --clean
+          args: release --clean --release-notes ${{ steps.git-cliff.outputs.changelog }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
